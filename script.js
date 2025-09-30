@@ -86,24 +86,20 @@ function cancelarReserva(numeroVaga) {
     set(vagaRef, { status: false, tempoExpiracao: null, reservadoPor: null });
 }
 
-// --- Lógica do Timer Visual (COM DIAGNÓSTICO) ---
+// --- Lógica do Timer Visual (Reintegrada) ---
 function startTimer(vagaKey, expirationTime, displayElement, prefixText, onExpire) {
-    console.log(`[DIAGNÓSTICO] Iniciando temporizador para ${vagaKey}. Tempo de expiração: ${new Date(expirationTime)}`);
-    if (!displayElement) {
-        console.error(`[ERRO DE DIAGNÓSTICO] O elemento para exibir o temporizador de ${vagaKey} não foi encontrado!`);
-        return;
-    }
-
     if (activeTimers[vagaKey]) {
         clearInterval(activeTimers[vagaKey]);
     }
 
-    const intervalId = setInterval(() => {
+    const updateText = () => {
         const totalSecondsRemaining = Math.round((expirationTime - Date.now()) / 1000);
 
         if (totalSecondsRemaining < 0) {
-            clearInterval(intervalId);
-            delete activeTimers[vagaKey];
+            if (activeTimers[vagaKey]) {
+                clearInterval(activeTimers[vagaKey]);
+                delete activeTimers[vagaKey];
+            }
             onExpire();
             return;
         }
@@ -114,12 +110,14 @@ function startTimer(vagaKey, expirationTime, displayElement, prefixText, onExpir
         const fSeconds = String(seconds).padStart(2, '0');
 
         displayElement.textContent = `${prefixText} (${fMinutes}:${fSeconds})`;
-    }, 1000);
+    };
 
+    updateText(); // Mostra o tempo imediatamente
+    const intervalId = setInterval(updateText, 1000);
     activeTimers[vagaKey] = intervalId;
 }
 
-// --- Função de Renderização (com Timers e Diagnóstico) ---
+// --- Função de Renderização (CORRIGIDA para usar a estrutura de dados correta) ---
 function renderVagas(vagasData) {
     if (!vagasData) {
         contadorVagasLivresElement.textContent = "Carregando dados...";
@@ -143,13 +141,13 @@ function renderVagas(vagasData) {
             clearInterval(activeTimers[vagaKey]);
             delete activeTimers[vagaKey];
         }
-        btnCheckin.textContent = "Estacionar Agora";
         const timerVisualAntigo = vagaElement.querySelector('.timer-countdown');
         if (timerVisualAntigo) timerVisualAntigo.remove();
         
         btnReservar.style.display = 'none';
         btnCheckin.style.display = 'none';
         btnCancelar.style.display = 'none';
+        btnCheckin.textContent = "Estacionar Agora";
         vagaElement.className = 'vaga';
 
         // Lógica de Estados
@@ -160,7 +158,6 @@ function renderVagas(vagasData) {
                 btnCheckin.style.display = 'block';
                 btnCancelar.style.display = 'block';
                 if (vagaData.tempoExpiracao) {
-                    console.log(`[DIAGNÓSTICO] Vaga ${i} está RESERVADA. Tentando iniciar o temporizador no botão.`);
                     startTimer(vagaKey, vagaData.tempoExpiracao, btnCheckin, "Estacionar Agora", () => {
                        cancelarReserva(i); 
                     });
@@ -173,7 +170,6 @@ function renderVagas(vagasData) {
                 btnCancelar.style.display = 'block';
             }
             if (vagaData.tempoExpiracao) {
-                console.log(`[DIAGNÓSTICO] Vaga ${i} está ESTACIONANDO. Tentando criar e iniciar o temporizador visual.`);
                 const timerElemento = document.createElement('div');
                 timerElemento.className = 'timer-countdown';
                 vagaElement.appendChild(timerElemento);
@@ -181,8 +177,7 @@ function renderVagas(vagasData) {
                     cancelarReserva(i);
                 });
             }
-        }
-        else if (vagaData.status === true) { // Ocupada
+        } else if (vagaData.status === true) {
             vagaElement.classList.add('ocupada');
             statusElement.textContent = 'OCUPADA';
         } else { // Livre
