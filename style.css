@@ -227,3 +227,10 @@ h2 {
     margin-bottom: 1rem;
 }
 
+/* NOVO: Estilo para o Timer de Contagem Regressiva */
+.timer-countdown {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--cor-amarelo-destaque);
+    margin-top: 10px;
+}
