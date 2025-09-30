@@ -1,6 +1,6 @@
 // Importa as funções necessárias do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // Sua configuração do Firebase
@@ -26,7 +26,7 @@ const btnLogout = document.getElementById('btn-logout');
 const contadorVagasLivresElement = document.getElementById('vagas-livres');
 
 let currentUser = null;
-let activeTimers = {}; // Objeto para guardar os timers ativos
+let activeTimers = {};
 
 // --- PONTO CENTRAL DA APLICAÇÃO ---
 onAuthStateChanged(auth, (user) => {
@@ -39,7 +39,6 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// --- Funções de Configuração da UI ---
 function setupUIForLoggedInUser(user) {
     userNameSpan.textContent = user.displayName ? user.displayName.split(' ')[0] : user.email.split('@')[0];
     userInfoDiv.style.display = 'flex';
@@ -51,7 +50,6 @@ function setupUIForLoggedInUser(user) {
     }
 }
 
-// --- Funções de Interação com o Firebase ---
 function listenToVagas() {
     const vagasRef = ref(database, 'vagas/');
     onValue(vagasRef, (snapshot) => {
@@ -88,9 +86,14 @@ function cancelarReserva(numeroVaga) {
     set(vagaRef, { status: false, tempoExpiracao: null, reservadoPor: null });
 }
 
-
-// --- Lógica do Timer Visual ---
+// --- Lógica do Timer Visual (COM DIAGNÓSTICO) ---
 function startTimer(vagaKey, expirationTime, displayElement, prefixText, onExpire) {
+    console.log(`[DIAGNÓSTICO] Iniciando temporizador para ${vagaKey}. Tempo de expiração: ${new Date(expirationTime)}`);
+    if (!displayElement) {
+        console.error(`[ERRO DE DIAGNÓSTICO] O elemento para exibir o temporizador de ${vagaKey} não foi encontrado!`);
+        return;
+    }
+
     if (activeTimers[vagaKey]) {
         clearInterval(activeTimers[vagaKey]);
     }
@@ -116,8 +119,7 @@ function startTimer(vagaKey, expirationTime, displayElement, prefixText, onExpir
     activeTimers[vagaKey] = intervalId;
 }
 
-
-// --- Função de Renderização (com Timers) ---
+// --- Função de Renderização (com Timers e Diagnóstico) ---
 function renderVagas(vagasData) {
     if (!vagasData) {
         contadorVagasLivresElement.textContent = "Carregando dados...";
@@ -136,32 +138,29 @@ function renderVagas(vagasData) {
         const btnCheckin = vagaElement.querySelector('.btn-checkin');
         const btnCancelar = vagaElement.querySelector('.btn-cancelar');
         
-        // Limpeza de timers e estilos
+        // Limpeza
         if (activeTimers[vagaKey]) {
             clearInterval(activeTimers[vagaKey]);
             delete activeTimers[vagaKey];
         }
-        btnCheckin.textContent = "Estacionar Agora"; // Reseta texto do botão
-
+        btnCheckin.textContent = "Estacionar Agora";
         const timerVisualAntigo = vagaElement.querySelector('.timer-countdown');
         if (timerVisualAntigo) timerVisualAntigo.remove();
         
-        // Reset visual dos botões
         btnReservar.style.display = 'none';
         btnCheckin.style.display = 'none';
         btnCancelar.style.display = 'none';
-        vagaElement.className = 'vaga'; // Reseta as classes de status
+        vagaElement.className = 'vaga';
 
-        if (vagaData.status === true) {
-            vagaElement.classList.add('ocupada');
-            statusElement.textContent = 'OCUPADA';
-        } else if (vagaData.status === "reservada") {
+        // Lógica de Estados
+        if (vagaData.status === "reservada") {
             vagaElement.classList.add('reservada');
             statusElement.textContent = 'RESERVADA';
             if (isOwner) {
                 btnCheckin.style.display = 'block';
                 btnCancelar.style.display = 'block';
                 if (vagaData.tempoExpiracao) {
+                    console.log(`[DIAGNÓSTICO] Vaga ${i} está RESERVADA. Tentando iniciar o temporizador no botão.`);
                     startTimer(vagaKey, vagaData.tempoExpiracao, btnCheckin, "Estacionar Agora", () => {
                        cancelarReserva(i); 
                     });
@@ -174,6 +173,7 @@ function renderVagas(vagasData) {
                 btnCancelar.style.display = 'block';
             }
             if (vagaData.tempoExpiracao) {
+                console.log(`[DIAGNÓSTICO] Vaga ${i} está ESTACIONANDO. Tentando criar e iniciar o temporizador visual.`);
                 const timerElemento = document.createElement('div');
                 timerElemento.className = 'timer-countdown';
                 vagaElement.appendChild(timerElemento);
@@ -181,6 +181,10 @@ function renderVagas(vagasData) {
                     cancelarReserva(i);
                 });
             }
+        }
+        else if (vagaData.status === true) { // Ocupada
+            vagaElement.classList.add('ocupada');
+            statusElement.textContent = 'OCUPADA';
         } else { // Livre
             vagaElement.classList.add('livre');
             statusElement.textContent = 'LIVRE';
@@ -192,3 +196,4 @@ function renderVagas(vagasData) {
     }
     contadorVagasLivresElement.textContent = `${vagasLivres} VAGAS DISPONÍVEIS`;
 }
+
