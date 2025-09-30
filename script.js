@@ -40,30 +40,25 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// A função de setup agora é mais simples
 function setupUIForLoggedInUser(user) {
     userNameSpan.textContent = user.displayName ? user.displayName.split(' ')[0] : user.email.split('@')[0];
     userInfoDiv.style.display = 'flex';
     btnLogout.addEventListener('click', () => signOut(auth));
 }
 
-// NOVO: Delegação de Eventos - Um único "ouvinte" para todos os botões das vagas
+// DELEGAÇÃO DE EVENTOS: A forma mais robusta de garantir que os cliques funcionem.
 containerVagas.addEventListener('click', (event) => {
     const target = event.target;
-    // Verifica se o que foi clicado é um botão com um ID válido
     if (target.tagName !== 'BUTTON' || !target.id) return;
 
-    // Extrai a ação e o número da vaga do ID do botão
-    // Ex: "btn-reservar-2" -> ["btn", "reservar", "2"]
     const parts = target.id.split('-');
     if (parts.length !== 3) return;
 
-    const action = parts[1]; // "reservar", "checkin", "cancelar"
+    const action = parts[1];
     const numeroVaga = parseInt(parts[2], 10);
 
     if (isNaN(numeroVaga)) return;
 
-    // Chama a função correta com base na ação
     switch (action) {
         case 'reservar':
             reservarVaga(numeroVaga);
@@ -89,10 +84,9 @@ function listenToVagas() {
 function reservarVaga(numeroVaga) {
     if (!currentUser) return;
     const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
-    const expirationTime = Date.now() + 180 * 1000;
     set(vagaRef, {
         status: "reservada",
-        tempoExpiracao: expirationTime,
+        tempoExpiracao: Date.now() + 180 * 1000,
         reservadoPor: currentUser.uid
     });
 }
@@ -100,10 +94,9 @@ function reservarVaga(numeroVaga) {
 function fazerCheckin(numeroVaga) {
     if (!currentUser) return;
     const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
-    const expirationTime = Date.now() + 60 * 1000;
     set(vagaRef, {
         status: "estacionando",
-        tempoExpiracao: expirationTime,
+        tempoExpiracao: Date.now() + 60 * 1000,
         reservadoPor: currentUser.uid
     });
 }
@@ -114,7 +107,7 @@ function cancelarReserva(numeroVaga) {
     set(vagaRef, { status: false, tempoExpiracao: null, reservadoPor: null });
 }
 
-// --- Lógica do Timer Visual (Reintegrada) ---
+// --- LÓGICA DO TEMPORIZADOR VISUAL ---
 function startTimer(vagaKey, expirationTime, displayElement, prefixText, onExpire) {
     if (activeTimers[vagaKey]) {
         clearInterval(activeTimers[vagaKey]);
@@ -145,16 +138,16 @@ function startTimer(vagaKey, expirationTime, displayElement, prefixText, onExpir
     activeTimers[vagaKey] = intervalId;
 }
 
-// --- Função de Renderização ---
+// --- FUNÇÃO DE RENDERIZAÇÃO ---
 function renderVagas(vagasData) {
     if (!vagasData) {
-        contadorVagasLivresElement.textContent = "Carregando dados...";
+        contadorVagasLivresElement.textContent = "A carregar dados...";
         return;
     }
 
     let vagasLivres = 0;
     for (let i = 1; i <= 4; i++) {
-        const vagaKey = `vaga-${i}`;
+        const vagaKey = `vaga${i}`;
         const vagaElement = document.getElementById(vagaKey);
         const vagaData = vagasData[vagaKey] || { status: false };
         const isOwner = currentUser && currentUser.uid === vagaData.reservadoPor;
