@@ -75,10 +75,20 @@ containerVagas.addEventListener('click', (event) => {
 
 function listenToVagas() {
     const vagasRef = ref(database, 'vagas/');
-    onValue(vagasRef, (snapshot) => {
-        const vagasData = snapshot.val();
-        renderVagas(vagasData);
-    });
+    
+    // **MUDANÇA CRÍTICA:** Adicionamos o segundo argumento (errorCallback)
+    onValue(vagasRef, 
+        (snapshot) => {
+            // Callback de sucesso (o que já tínhamos)
+            const vagasData = snapshot.val();
+            renderVagas(vagasData);
+        }, 
+        (error) => {
+            // Callback de ERRO (a parte nova e importante)
+            console.error("Erro de permissão do Firebase:", error);
+            contadorVagasLivresElement.textContent = "Erro ao carregar vagas. Verifique as permissões.";
+        }
+    );
 }
 
 function reservarVaga(numeroVaga) {
@@ -140,8 +150,9 @@ function startTimer(vagaKey, expirationTime, displayElement, prefixText, onExpir
 
 // --- FUNÇÃO DE RENDERIZAÇÃO ---
 function renderVagas(vagasData) {
-    if (!vagasData) {
-        contadorVagasLivresElement.textContent = "A carregar dados...";
+    // Se não houver dados, pode ser a primeira vez que carrega ou um erro.
+    if (!vagasData && currentUser) {
+        contadorVagasLivresElement.textContent = "Nenhuma vaga encontrada ou a carregar...";
         return;
     }
 
