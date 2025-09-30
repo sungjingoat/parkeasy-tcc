@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkEasy - Monitor de Vagas</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="Park.png" type="image/x-icon">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="header-content">
+            <img src="ParkE.png" alt="Logo ParkEasy" class="logo">
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link">Início</a>
+                <a href="vagas.html" class="nav-link active">Monitor de Vagas</a>
+                <a href="sobre.html" class="nav-link">Sobre</a>
+            </nav>
+            <!-- Área de Autenticação do Usuário -->
+            <div id="auth-container">
+                <button id="btn-login">Login com Google</button>
+                <div id="user-info">
+                    <span id="user-name"></span>
+                    <button id="btn-logout">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="monitor">
+            <h2>Status das Vagas em Tempo Real</h2>
+            <p id="vagas-livres" class="status-counter">Carregando...</p>
+            
+            <div class="container-vagas">
+                <!-- Vaga 1 -->
+                <div class="vaga" id="vaga-1">
+                    <p class="vaga-numero">VAGA 01</p>
+                    <span class="status">--</span>
+                    <div class="botoes-vaga">
+                        <button class="btn-vaga btn-reservar" id="btn-reservar-1">Reservar</button>
+                        <button class="btn-vaga btn-checkin" id="btn-checkin-1">Estacionar Agora</button>
+                        <button class="btn-vaga btn-cancelar" id="btn-cancelar-1">Cancelar</button>
+                    </div>
+                </div>
+                <!-- Vaga 2 -->
+                <div class="vaga" id="vaga-2">
+                    <p class="vaga-numero">VAGA 02</p>
+                    <span class="status">--</span>
+                    <div class="botoes-vaga">
+                        <button class="btn-vaga btn-reservar" id="btn-reservar-2">Reservar</button>
+                        <button class="btn-vaga btn-checkin" id="btn-checkin-2">Estacionar Agora</button>
+                        <button class="btn-vaga btn-cancelar" id="btn-cancelar-2">Cancelar</button>
+                    </div>
+                </div>
+                <!-- Vaga 3 -->
+                <div class="vaga" id="vaga-3">
+                    <p class="vaga-numero">VAGA 03</p>
+                    <span class="status">--</span>
+                    <div class="botoes-vaga">
+                        <button class="btn-vaga btn-reservar" id="btn-reservar-3">Reservar</button>
+                        <button class="btn-vaga btn-checkin" id="btn-checkin-3">Estacionar Agora</button>
+                        <button class="btn-vaga btn-cancelar" id="btn-cancelar-3">Cancelar</button>
+                    </div>
+                </div>
+                <!-- Vaga 4 -->
+                <div class="vaga" id="vaga-4">
+                    <p class="vaga-numero">VAGA 04</p>
+                    <span class="status">--</span>
+                    <div class="botoes-vaga">
+                        <button class="btn-vaga btn-reservar" id="btn-reservar-4">Reservar</button>
+                        <button class="btn-vaga btn-checkin" id="btn-checkin-4">Estacionar Agora</button>
+                        <button class="btn-vaga btn-cancelar" id="btn-cancelar-4">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="site-footer">
+        <p>ParkEasy &copy; 2025 - Projeto de TCC</p>
+    </footer>
+
+    <script type="module" src="script.js"></script>
+
+</body>
+</html>

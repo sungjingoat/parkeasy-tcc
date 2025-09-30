@@ -1,0 +1,166 @@
+/* Configurações Globais e Paleta de Cores */
+:root {
+    --cor-fundo: #1A202C;
+    --cor-texto: #F7FAFC;
+    --cor-verde-neon: #39FF14;
+    --cor-vermelho-alerta: #FF4136;
+    --cor-amarelo-destaque: #FFDE00;
+    --cor-azul-checkin: #007bff;
+    --cor-fundo-secao: #2D3748;
+    --cor-borda-neon: #2de811;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    margin: 0;
+}
+
+/* Header, Logo e Navegação */
+.site-header {
+    background-color: var(--cor-fundo-secao);
+    padding: 15px 0;
+    border-bottom: 2px solid var(--cor-borda-neon);
+    box-shadow: 0 2px 10px rgba(57, 255, 20, 0.1);
+    transition: border-bottom-color 0.3s;
+}
+
+.site-header.logged-in {
+    border-bottom-color: var(--cor-amarelo-destaque);
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo { 
+    width: 90px; 
+    height: auto;
+}
+
+.main-nav a { 
+    color: var(--cor-texto); 
+    text-decoration: none; 
+    margin-left: 25px; 
+    font-weight: 600; 
+    font-size: 1rem; 
+    transition: color 0.3s; 
+}
+
+.main-nav a:hover, .main-nav a.active { 
+    color: var(--cor-verde-neon); 
+}
+
+/* Área de Autenticação */
+#auth-container { 
+    margin-left: 20px; 
+}
+
+#auth-container button { 
+    border: none; 
+    padding: 8px 15px; 
+    border-radius: 5px; 
+    font-weight: 600; 
+    cursor: pointer; 
+}
+
+#btn-login { 
+    background-color: var(--cor-verde-neon); 
+    color: var(--cor-fundo); 
+}
+
+#user-info { 
+    display: none; 
+    align-items: center; 
+    gap: 15px; 
+}
+
+#user-info span { 
+    font-weight: 600; 
+}
+
+#btn-logout { 
+    background-color: var(--cor-vermelho-alerta); 
+    color: var(--cor-texto); 
+}
+
+/* Conteúdo Principal e Seções */
+main { 
+    min-height: calc(100vh - 200px); 
+}
+
+section { 
+    max-width: 1200px; 
+    margin: 2rem auto; 
+    padding: 2rem; 
+    background-color: var(--cor-fundo-secao); 
+    border-radius: 12px; 
+}
+
+h2 { 
+    text-align: center; 
+    font-size: 2.5rem; 
+    margin-top: 0; 
+    margin-bottom: 30px; 
+    color: var(--cor-texto); 
+}
+
+/* Estilos Específicos de Página */
+.hero-content h1 { font-size: 3.5rem; margin-bottom: 0.5rem; }
+.hero-content .subtitle { font-size: 1.5rem; color: #A0AEC0; margin-bottom: 2rem; }
+.cta-button { background-color: var(--cor-verde-neon); color: var(--cor-fundo); padding: 15px 30px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1.2rem; transition: transform 0.3s, box-shadow 0.3s; }
+.cta-button:hover { transform: translateY(-3px); box-shadow: 0 5px 20px rgba(57, 255, 20, 0.4); }
+.sobre-content { max-width: 800px; margin: 0 auto; text-align: center; }
+.sobre-content ul { list-style: none; padding: 0; }
+.sobre-content li { margin-bottom: 10px; }
+
+/* Página de Vagas */
+.status-counter { text-align: center; font-size: 1.5rem; font-weight: 600; margin-bottom: 40px; color: var(--cor-amarelo-destaque); }
+.container-vagas { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; }
+
+.vaga { 
+    width: 220px; 
+    height: 160px; 
+    border: 4px solid #4A5568; 
+    border-radius: 10px; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    font-weight: 700; 
+    color: var(--cor-texto); 
+    background-color: #4A5568; 
+    transition: all 0.4s ease-in-out; 
+    position: relative; 
+    padding-bottom: 60px; 
+}
+
+.vaga-numero { font-size: 1.8rem; margin: 0; }
+.vaga .status { font-size: 1.2rem; margin-top: 10px; text-transform: uppercase; }
+
+/* Botões dentro das Vagas */
+.botoes-vaga { position: absolute; bottom: 15px; left: 0; right: 0; text-align: center; }
+.btn-vaga { border: none; padding: 8px 16px; border-radius: 5px; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; transition: all 0.3s; display: none; }
+.btn-reservar { background-color: var(--cor-verde-neon); color: var(--cor-fundo); }
+.btn-checkin { background-color: var(--cor-azul-checkin); color: var(--cor-texto); }
+.btn-cancelar { background-color: var(--cor-vermelho-alerta); color: var(--cor-texto); margin-left: 5px; }
+.btn-vaga:hover { transform: scale(1.05); }
+
+/* Classes de Status das Vagas */
+.livre { border-color: #4A5568; }
+.ocupada { background-color: rgba(255, 65, 54, 0.1); border-color: var(--cor-vermelho-alerta); box-shadow: 0 0 20px rgba(255, 65, 54, 0.5); }
+.reservada { background-color: rgba(255, 222, 0, 0.1); border-color: var(--cor-amarelo-destaque); box-shadow: 0 0 20px rgba(255, 222, 0, 0.5); }
+.estacionando { background-color: rgba(0, 123, 255, 0.1); border-color: var(--cor-azul-checkin); box-shadow: 0 0 20px rgba(0, 123, 255, 0.5); }
+
+/* Timer Visual */
+.timer-countdown { font-size: 1.5rem; font-weight: 700; color: var(--cor-amarelo-destaque); margin-top: 10px; }
+
+/* Footer */
+.site-footer { text-align: center; padding: 20px; margin-top: 40px; background-color: var(--cor-fundo-secao); border-top: 1px solid #4A5568; }
