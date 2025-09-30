@@ -24,6 +24,7 @@ const userInfoDiv = document.getElementById('user-info');
 const userNameSpan = document.getElementById('user-name');
 const btnLogout = document.getElementById('btn-logout');
 const contadorVagasLivresElement = document.getElementById('vagas-livres');
+const containerVagas = document.querySelector('.container-vagas');
 
 let currentUser = null;
 let activeTimers = {};
@@ -39,16 +40,43 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
+// A função de setup agora é mais simples
 function setupUIForLoggedInUser(user) {
     userNameSpan.textContent = user.displayName ? user.displayName.split(' ')[0] : user.email.split('@')[0];
     userInfoDiv.style.display = 'flex';
     btnLogout.addEventListener('click', () => signOut(auth));
-    for (let i = 1; i <= 4; i++) {
-        document.getElementById(`btn-reservar-${i}`).addEventListener('click', () => reservarVaga(i));
-        document.getElementById(`btn-checkin-${i}`).addEventListener('click', () => fazerCheckin(i));
-        document.getElementById(`btn-cancelar-${i}`).addEventListener('click', () => cancelarReserva(i));
-    }
 }
+
+// NOVO: Delegação de Eventos - Um único "ouvinte" para todos os botões das vagas
+containerVagas.addEventListener('click', (event) => {
+    const target = event.target;
+    // Verifica se o que foi clicado é um botão com um ID válido
+    if (target.tagName !== 'BUTTON' || !target.id) return;
+
+    // Extrai a ação e o número da vaga do ID do botão
+    // Ex: "btn-reservar-2" -> ["btn", "reservar", "2"]
+    const parts = target.id.split('-');
+    if (parts.length !== 3) return;
+
+    const action = parts[1]; // "reservar", "checkin", "cancelar"
+    const numeroVaga = parseInt(parts[2], 10);
+
+    if (isNaN(numeroVaga)) return;
+
+    // Chama a função correta com base na ação
+    switch (action) {
+        case 'reservar':
+            reservarVaga(numeroVaga);
+            break;
+        case 'checkin':
+            fazerCheckin(numeroVaga);
+            break;
+        case 'cancelar':
+            cancelarReserva(numeroVaga);
+            break;
+    }
+});
+
 
 function listenToVagas() {
     const vagasRef = ref(database, 'vagas/');
@@ -117,7 +145,7 @@ function startTimer(vagaKey, expirationTime, displayElement, prefixText, onExpir
     activeTimers[vagaKey] = intervalId;
 }
 
-// --- Função de Renderização (CORRIGIDA para usar a estrutura de dados correta) ---
+// --- Função de Renderização ---
 function renderVagas(vagasData) {
     if (!vagasData) {
         contadorVagasLivresElement.textContent = "Carregando dados...";
@@ -132,9 +160,9 @@ function renderVagas(vagasData) {
         const isOwner = currentUser && currentUser.uid === vagaData.reservadoPor;
 
         const statusElement = vagaElement.querySelector('.status');
-        const btnReservar = vagaElement.querySelector('.btn-reservar');
-        const btnCheckin = vagaElement.querySelector('.btn-checkin');
-        const btnCancelar = vagaElement.querySelector('.btn-cancelar');
+        const btnReservar = document.getElementById(`btn-reservar-${i}`);
+        const btnCheckin = document.getElementById(`btn-checkin-${i}`);
+        const btnCancelar = document.getElementById(`btn-cancelar-${i}`);
         
         // Limpeza
         if (activeTimers[vagaKey]) {
