@@ -24,79 +24,62 @@ const userInfoDiv = document.getElementById('user-info');
 const userNameSpan = document.getElementById('user-name');
 const btnLogout = document.getElementById('btn-logout');
 const contadorVagasLivresElement = document.getElementById('vagas-livres');
-const containerVagas = document.querySelector('.container-vagas');
 
 let currentUser = null;
 
 // --- PONTO CENTRAL DA APLICAÇÃO ---
+// Esta função é chamada assim que a página carrega e verifica o estado do login.
 onAuthStateChanged(auth, (user) => {
     if (user) {
+        // USUÁRIO ESTÁ LOGADO
         currentUser = user;
         setupUIForLoggedInUser(user);
-        listenToVagas();
+        listenToVagas(); // Só começa a "ouvir" as vagas DEPOIS de confirmar o login
     } else {
+        // USUÁRIO NÃO ESTÁ LOGADO
+        // Redireciona para a página de login
         window.location.href = 'login.html';
     }
 });
 
+// --- Funções de Configuração da UI ---
+
 function setupUIForLoggedInUser(user) {
-    userNameSpan.textContent = user.displayName ? user.displayName.split(' ')[0] : user.email.split('@')[0];
+    // Mostra as informações do usuário e o botão de sair
+    userNameSpan.textContent = user.displayName ? user.displayName.split(' ')[0] : user.email;
     userInfoDiv.style.display = 'flex';
-    btnLogout.addEventListener('click', () => signOut(auth));
+
+    // Adiciona o evento de clique para o botão de sair
+    btnLogout.addEventListener('click', () => {
+        signOut(auth).catch(error => console.error("Erro ao fazer logout:", error));
+    });
+
+    // Adiciona eventos de clique para os botões das vagas
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById(`btn-reservar-${i}`).addEventListener('click', () => reservarVaga(i));
+        document.getElementById(`btn-checkin-${i}`).addEventListener('click', () => fazerCheckin(i));
+        document.getElementById(`btn-cancelar-${i}`).addEventListener('click', () => cancelarReserva(i));
+    }
 }
 
-// DELEGAÇÃO DE EVENTOS: A forma mais robusta de garantir que os cliques funcionem.
-containerVagas.addEventListener('click', (event) => {
-    const target = event.target;
-    if (target.tagName !== 'BUTTON' || !target.id) return;
-
-    const parts = target.id.split('-');
-    if (parts.length !== 3) return;
-
-    const action = parts[1];
-    const numeroVaga = parseInt(parts[2], 10);
-
-    if (isNaN(numeroVaga)) return;
-
-    switch (action) {
-        case 'reservar':
-            reservarVaga(numeroVaga);
-            break;
-        case 'checkin':
-            fazerCheckin(numeroVaga);
-            break;
-        case 'cancelar':
-            cancelarReserva(numeroVaga);
-            break;
-    }
-});
-
+// --- Funções de Interação com o Firebase ---
 
 function listenToVagas() {
     const vagasRef = ref(database, 'vagas/');
-    
-    // **MUDANÇA CRÍTICA:** Adicionamos o segundo argumento (errorCallback)
-    onValue(vagasRef, 
-        (snapshot) => {
-            // Callback de sucesso (o que já tínhamos)
-            const vagasData = snapshot.val();
-            renderVagas(vagasData);
-        }, 
-        (error) => {
-            // Callback de ERRO (a parte nova e importante)
-            console.error("Erro de permissão do Firebase:", error);
-            contadorVagasLivresElement.textContent = "Erro ao carregar vagas. Verifique as permissões.";
-        }
-    );
+    onValue(vagasRef, (snapshot) => {
+        const vagasData = snapshot.val();
+        renderVagas(vagasData);
+    });
 }
-
-// --- Funções de Ação (Simplificadas) ---
 
 function reservarVaga(numeroVaga) {
     if (!currentUser) return;
     const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
+    // Usaremos a lógica avançada que você desenvolveu
+    const expirationTime = Date.now() + 180 * 1000; // 3 minutos
     set(vagaRef, {
         status: "reservada",
+        tempoExpiracao: expirationTime,
         reservadoPor: currentUser.uid
     });
 }
@@ -104,8 +87,10 @@ function reservarVaga(numeroVaga) {
 function fazerCheckin(numeroVaga) {
     if (!currentUser) return;
     const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
+    const expirationTime = Date.now() + 60 * 1000; // 60 segundos
     set(vagaRef, {
         status: "estacionando",
+        tempoExpiracao: expirationTime,
         reservadoPor: currentUser.uid
     });
 }
@@ -113,53 +98,46 @@ function fazerCheckin(numeroVaga) {
 function cancelarReserva(numeroVaga) {
     if (!currentUser) return;
     const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
-    set(vagaRef, { status: false, reservadoPor: null });
+    set(vagaRef, { status: false, tempoExpiracao: null, reservadoPor: null });
 }
 
+// --- Função de Renderização ---
 
-// --- FUNÇÃO DE RENDERIZAÇÃO (Simplificada e Robusta) ---
 function renderVagas(vagasData) {
-    // Se não houver dados, pode ser a primeira vez que carrega ou um erro.
-    if (!vagasData && currentUser) {
-        contadorVagasLivresElement.textContent = "Nenhuma vaga encontrada ou a carregar...";
+    if (!vagasData) {
+        contadorVagasLivresElement.textContent = "Carregando dados...";
         return;
     }
 
     let vagasLivres = 0;
     for (let i = 1; i <= 4; i++) {
-        const vagaKey = `vaga${i}`;
-        const vagaElement = document.getElementById(vagaKey);
-        const vagaData = vagasData[vagaKey] || { status: false }; // Garante que vagaData seja sempre um objeto
+        const vagaElement = document.getElementById(`vaga-${i}`);
+        const vagaData = vagasData[`vaga${i}`] || { status: false };
         const isOwner = currentUser && currentUser.uid === vagaData.reservadoPor;
 
         const statusElement = vagaElement.querySelector('.status');
-        const btnReservar = document.getElementById(`btn-reservar-${i}`);
-        const btnCheckin = document.getElementById(`btn-checkin-${i}`);
-        const btnCancelar = document.getElementById(`btn-cancelar-${i}`);
-        
-        // Limpeza
+        const btnReservar = vagaElement.querySelector('.btn-reservar');
+        const btnCheckin = vagaElement.querySelector('.btn-checkin');
+        const btnCancelar = vagaElement.querySelector('.btn-cancelar');
+
+        // Reset visual
         btnReservar.style.display = 'none';
         btnCheckin.style.display = 'none';
         btnCancelar.style.display = 'none';
-        vagaElement.className = 'vaga';
+        vagaElement.className = 'vaga'; // Reseta todas as classes de estado
 
-        // Lógica de Estados
-        if (vagaData.status === "reservada") {
-            vagaElement.classList.add('reservada');
-            statusElement.textContent = 'RESERVADA';
-            if (isOwner) {
-                btnCheckin.style.display = 'block';
-                btnCancelar.style.display = 'block';
-            }
-        } else if (vagaData.status === "estacionando") {
-            vagaElement.classList.add('estacionando');
-            statusElement.textContent = 'ESTACIONANDO';
-            if (isOwner) {
-                btnCancelar.style.display = 'block';
-            }
-        } else if (vagaData.status === true) {
+        if (vagaData.status === true) {
             vagaElement.classList.add('ocupada');
             statusElement.textContent = 'OCUPADA';
+        } else if (vagaData.status === "reservada" || vagaData.status === "estacionando") {
+            const isEstacionando = vagaData.status === "estacionando";
+            vagaElement.classList.add(isEstacionando ? 'estacionando' : 'reservada');
+            statusElement.textContent = isEstacionando ? 'ESTACIONANDO' : 'RESERVADA';
+            
+            if (isOwner) {
+                if (!isEstacionando) btnCheckin.style.display = 'block';
+                btnCancelar.style.display = 'block';
+            }
         } else { // Livre
             vagaElement.classList.add('livre');
             statusElement.textContent = 'LIVRE';
