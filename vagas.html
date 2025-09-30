@@ -20,13 +20,10 @@
                 <a href="vagas.html" class="nav-link active">Monitor de Vagas</a>
                 <a href="sobre.html" class="nav-link">Sobre</a>
             </nav>
-            <!-- Área de Autenticação do Usuário -->
-            <div id="auth-container">
-                <button id="btn-login">Login com Google</button>
-                <div id="user-info">
-                    <span id="user-name"></span>
-                    <button id="btn-logout">Logout</button>
-                </div>
+            <!-- ÁREA DO USUÁRIO LOGADO -->
+            <div id="user-info" style="display: none;">
+                <span>Olá, <span id="user-name"></span>!</span>
+                <button id="btn-logout">Sair</button>
             </div>
         </div>
     </header>
@@ -34,7 +31,7 @@
     <main>
         <section id="monitor">
             <h2>Status das Vagas em Tempo Real</h2>
-            <p id="vagas-livres" class="status-counter">Carregando...</p>
+            <p id="vagas-livres" class="status-counter">Conectando ao servidor...</p>
             
             <div class="container-vagas">
                 <!-- Vaga 1 -->
@@ -47,7 +44,7 @@
                         <button class="btn-vaga btn-cancelar" id="btn-cancelar-1">Cancelar</button>
                     </div>
                 </div>
-                <!-- Vaga 2 -->
+                 <!-- Vaga 2 -->
                 <div class="vaga" id="vaga-2">
                     <p class="vaga-numero">VAGA 02</p>
                     <span class="status">--</span>
@@ -57,7 +54,7 @@
                         <button class="btn-vaga btn-cancelar" id="btn-cancelar-2">Cancelar</button>
                     </div>
                 </div>
-                <!-- Vaga 3 -->
+                 <!-- Vaga 3 -->
                 <div class="vaga" id="vaga-3">
                     <p class="vaga-numero">VAGA 03</p>
                     <span class="status">--</span>
@@ -67,7 +64,7 @@
                         <button class="btn-vaga btn-cancelar" id="btn-cancelar-3">Cancelar</button>
                     </div>
                 </div>
-                <!-- Vaga 4 -->
+                 <!-- Vaga 4 -->
                 <div class="vaga" id="vaga-4">
                     <p class="vaga-numero">VAGA 04</p>
                     <span class="status">--</span>
@@ -80,7 +77,7 @@
             </div>
         </section>
     </main>
-    
+
     <footer class="site-footer">
         <p>ParkEasy &copy; 2025 - Projeto de TCC</p>
     </footer>
@@ -89,3 +86,4 @@
 
 </body>
 </html>
+

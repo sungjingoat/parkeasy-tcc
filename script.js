@@ -1,23 +1,9 @@
-// =================================================================================
-// ParkEasy TCC - Script Definitivo v19
-// Arquitetura à Prova de Falhas (Login-Primeiro)
-// =================================================================================
-
 // Importa as funções necessárias do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { 
-    getAuth, 
-    GoogleAuthProvider, 
-    signInWithRedirect, 
-    signOut, 
-    onAuthStateChanged, 
-    getRedirectResult,
-    browserSessionPersistence,
-    setPersistence 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// --- Configuração do Firebase ---
+// Sua configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyANqo2XC6y2FA_sJ6zMjOz65MeGaYp-axM",
     authDomain: "parkeasy-dd00e.firebaseapp.com",
@@ -28,94 +14,105 @@ const firebaseConfig = {
     appId: "1:811104871555:web:f629f849914d908cb6a7b6"
 };
 
-// --- Inicialização dos Serviços ---
+// Inicialização dos serviços
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 
-// --- Variáveis Globais ---
+// --- Elementos da UI ---
+const userInfoDiv = document.getElementById('user-info');
+const userNameSpan = document.getElementById('user-name');
+const btnLogout = document.getElementById('btn-logout');
+const contadorVagasLivresElement = document.getElementById('vagas-livres');
+
 let currentUser = null;
-let unsubscribeFromVagas = null; // Função para parar de "ouvir" o banco de dados
 
-// --- Seleção dos Elementos da UI ---
-const elements = {
-    btnLogin: document.getElementById('btn-login'),
-    btnLogout: document.getElementById('btn-logout'),
-    userInfoDiv: document.getElementById('user-info'),
-    userNameSpan: document.getElementById('user-name'),
-    contadorVagas: document.getElementById('vagas-livres'),
-    header: document.querySelector('.site-header'),
-    vagasElements: Array.from(document.querySelectorAll('.vaga'))
-};
+// --- PONTO CENTRAL DA APLICAÇÃO ---
+// Esta função é chamada assim que a página carrega e verifica o estado do login.
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // USUÁRIO ESTÁ LOGADO
+        currentUser = user;
+        setupUIForLoggedInUser(user);
+        listenToVagas(); // Só começa a "ouvir" as vagas DEPOIS de confirmar o login
+    } else {
+        // USUÁRIO NÃO ESTÁ LOGADO
+        // Redireciona para a página de login
+        window.location.href = 'login.html';
+    }
+});
 
-// --- Funções de Ação ---
-function handleLogin() {
-    setPersistence(auth, browserSessionPersistence)
-        .then(() => signInWithRedirect(auth, provider))
-        .catch(error => console.error("Erro ao iniciar login:", error));
+// --- Funções de Configuração da UI ---
+
+function setupUIForLoggedInUser(user) {
+    // Mostra as informações do usuário e o botão de sair
+    userNameSpan.textContent = user.displayName ? user.displayName.split(' ')[0] : user.email;
+    userInfoDiv.style.display = 'flex';
+
+    // Adiciona o evento de clique para o botão de sair
+    btnLogout.addEventListener('click', () => {
+        signOut(auth).catch(error => console.error("Erro ao fazer logout:", error));
+    });
+
+    // Adiciona eventos de clique para os botões das vagas
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById(`btn-reservar-${i}`).addEventListener('click', () => reservarVaga(i));
+        document.getElementById(`btn-checkin-${i}`).addEventListener('click', () => fazerCheckin(i));
+        document.getElementById(`btn-cancelar-${i}`).addEventListener('click', () => cancelarReserva(i));
+    }
 }
 
-function handleLogout() {
-    signOut(auth);
+// --- Funções de Interação com o Firebase ---
+
+function listenToVagas() {
+    const vagasRef = ref(database, 'vagas/');
+    onValue(vagasRef, (snapshot) => {
+        const vagasData = snapshot.val();
+        renderVagas(vagasData);
+    });
 }
 
-function handleReservar(numeroVaga) {
+function reservarVaga(numeroVaga) {
     if (!currentUser) return;
     const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
-    set(vagaRef, { status: "reservada", tempoExpiracao: Date.now() + 180000, reservadoPor: currentUser.uid });
+    // Usaremos a lógica avançada que você desenvolveu
+    const expirationTime = Date.now() + 180 * 1000; // 3 minutos
+    set(vagaRef, {
+        status: "reservada",
+        tempoExpiracao: expirationTime,
+        reservadoPor: currentUser.uid
+    });
 }
 
-function handleCancelar(numeroVaga) {
+function fazerCheckin(numeroVaga) {
+    if (!currentUser) return;
+    const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
+    const expirationTime = Date.now() + 60 * 1000; // 60 segundos
+    set(vagaRef, {
+        status: "estacionando",
+        tempoExpiracao: expirationTime,
+        reservadoPor: currentUser.uid
+    });
+}
+
+function cancelarReserva(numeroVaga) {
     if (!currentUser) return;
     const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
     set(vagaRef, { status: false, tempoExpiracao: null, reservadoPor: null });
 }
 
-function handleCheckin(numeroVaga) {
-    if (!currentUser) return;
-    const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
-    set(vagaRef, { status: "estacionando", tempoExpiracao: Date.now() + 60000, reservadoPor: currentUser.uid });
-}
+// --- Função de Renderização ---
 
-// --- Função Principal de Renderização ---
-function renderUI(vagasData = null) {
-    // 1. Renderiza o estado de Autenticação
-    if (currentUser) {
-        elements.userNameSpan.textContent = currentUser.displayName.split(' ')[0];
-        elements.userInfoDiv.style.display = 'flex';
-        elements.btnLogin.style.display = 'none';
-        elements.header.classList.add('logged-in');
-    } else {
-        elements.userInfoDiv.style.display = 'none';
-        elements.btnLogin.style.display = 'block';
-        elements.header.classList.remove('logged-in');
-        elements.contadorVagas.textContent = "Faça login para ver e interagir com as vagas.";
-    }
-
-    // Se estiver deslogado, reseta a aparência das vagas e para por aqui.
-    if (!currentUser) {
-        elements.vagasElements.forEach(vagaEl => {
-            vagaEl.className = 'vaga';
-            vagaEl.querySelector('.status').textContent = '--';
-            vagaEl.querySelector('.btn-reservar').style.display = 'none';
-            vagaEl.querySelector('.btn-checkin').style.display = 'none';
-            vagaEl.querySelector('.btn-cancelar').style.display = 'none';
-        });
-        return;
-    }
-
-    // Se estiver logado, mas os dados ainda não chegaram.
+function renderVagas(vagasData) {
     if (!vagasData) {
-        elements.contadorVagas.textContent = "Carregando vagas...";
+        contadorVagasLivresElement.textContent = "Carregando dados...";
         return;
     }
-    
-    // 2. Renderiza o estado das Vagas
+
     let vagasLivres = 0;
-    for (let i = 0; i < 4; i++) {
-        const vagaElement = elements.vagasElements[i];
-        const vagaData = vagasData[`vaga${i + 1}`] || { status: false };
+    for (let i = 1; i <= 4; i++) {
+        const vagaElement = document.getElementById(`vaga-${i}`);
+        const vagaData = vagasData[`vaga${i}`] || { status: false };
         const isOwner = currentUser && currentUser.uid === vagaData.reservadoPor;
 
         const statusElement = vagaElement.querySelector('.status');
@@ -123,11 +120,11 @@ function renderUI(vagasData = null) {
         const btnCheckin = vagaElement.querySelector('.btn-checkin');
         const btnCancelar = vagaElement.querySelector('.btn-cancelar');
 
-        // Reset
+        // Reset visual
         btnReservar.style.display = 'none';
         btnCheckin.style.display = 'none';
         btnCancelar.style.display = 'none';
-        vagaElement.className = 'vaga';
+        vagaElement.className = 'vaga'; // Reseta todas as classes de estado
 
         if (vagaData.status === true) {
             vagaElement.classList.add('ocupada');
@@ -136,6 +133,7 @@ function renderUI(vagasData = null) {
             const isEstacionando = vagaData.status === "estacionando";
             vagaElement.classList.add(isEstacionando ? 'estacionando' : 'reservada');
             statusElement.textContent = isEstacionando ? 'ESTACIONANDO' : 'RESERVADA';
+            
             if (isOwner) {
                 if (!isEstacionando) btnCheckin.style.display = 'block';
                 btnCancelar.style.display = 'block';
@@ -143,59 +141,12 @@ function renderUI(vagasData = null) {
         } else { // Livre
             vagaElement.classList.add('livre');
             statusElement.textContent = 'LIVRE';
-            btnReservar.style.display = 'block';
+            if (currentUser) {
+                btnReservar.style.display = 'block';
+            }
             vagasLivres++;
         }
     }
-    elements.contadorVagas.textContent = `${vagasLivres} VAGAS DISPONÍVEIS`;
+    contadorVagasLivresElement.textContent = `${vagasLivres} VAGAS DISPONÍVEIS`;
 }
-
-// --- Ponto de Entrada da Aplicação ---
-function main() {
-    // 1. Anexa os eventos de clique
-    elements.btnLogin.addEventListener('click', handleLogin);
-    elements.btnLogout.addEventListener('click', handleLogout);
-    for (let i = 0; i < 4; i++) {
-        const numVaga = i + 1;
-        elements.vagasElements[i].querySelector('.btn-reservar').addEventListener('click', () => handleReservar(numVaga));
-        elements.vagasElements[i].querySelector('.btn-checkin').addEventListener('click', () => handleCheckin(numVaga));
-        elements.vagasElements[i].querySelector('.btn-cancelar').addEventListener('click', () => handleCancelar(numVaga));
-    }
-
-    // 2. O OBSERVADOR DE AUTH É O PONTO CENTRAL DE TUDO
-    onAuthStateChanged(auth, (user) => {
-        currentUser = user;
-
-        // Se havia um "ouvinte" do banco de dados antigo, ele é desligado.
-        if (unsubscribeFromVagas) {
-            unsubscribeFromVagas();
-        }
-
-        if (user) {
-            // Se o usuário LOGOU:
-            // SÓ AGORA nós começamos a ouvir o banco de dados.
-            const vagasRef = ref(database, 'vagas/');
-            unsubscribeFromVagas = onValue(vagasRef, 
-                (snapshot) => {
-                    renderUI(snapshot.val()); // Renderiza com os dados recebidos
-                }, 
-                (error) => {
-                    console.error("Erro de permissão do Firebase:", error);
-                    renderUI(null); // Renderiza o estado de erro/deslogado
-                }
-            );
-        } else {
-            // Se o usuário DESLOGOU:
-            // Renderiza a tela no estado "deslogado".
-            renderUI(null);
-        }
-    });
-
-    // 3. Verifica o resultado do redirect por último.
-    // O onAuthStateChanged acima será ativado automaticamente se o login for bem-sucedido.
-    getRedirectResult(auth).catch(error => console.error("Erro no getRedirectResult:", error));
-}
-
-// Inicia a aplicação
-main();
 

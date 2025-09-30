@@ -164,3 +164,66 @@ h2 {
 
 /* Footer */
 .site-footer { text-align: center; padding: 20px; margin-top: 40px; background-color: var(--cor-fundo-secao); border-top: 1px solid #4A5568; }
+
+/* ... (todo o seu CSS existente) ... */
+
+/* NOVO: Estilos para a Página de Login */
+.login-container {
+    max-width: 450px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background-color: var(--cor-fundo-secao);
+    border-radius: 12px;
+}
+
+.form-wrapper h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.form-wrapper input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 1rem;
+    background-color: #4A5568;
+    border: 1px solid #718096;
+    border-radius: 5px;
+    color: var(--cor-texto);
+    font-family: 'Poppins', sans-serif;
+    box-sizing: border-box; /* Garante que o padding não aumente a largura */
+}
+
+.form-wrapper button {
+    width: 100%;
+    padding: 12px 15px;
+    background-color: var(--cor-verde-neon);
+    color: var(--cor-fundo);
+    border: none;
+    border-radius: 5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.3s;
+}
+
+.form-wrapper button:hover {
+    filter: brightness(1.1);
+}
+
+.form-wrapper p {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.form-wrapper a {
+    color: var(--cor-verde-neon);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.form-error {
+    color: var(--cor-vermelho-alerta);
+    text-align: center;
+    min-height: 20px;
+    margin-bottom: 1rem;
+}
+

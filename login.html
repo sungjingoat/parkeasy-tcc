@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkEasy - Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="Park.png" type="image/x-icon">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="header-content">
+            <img src="ParkE.png" alt="Logo ParkEasy" class="logo">
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link">Início</a>
+                <a href="sobre.html" class="nav-link">Sobre</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="login-container">
+            <div class="form-wrapper" id="login-form">
+                <h2>Entrar na sua Conta</h2>
+                <p class="form-error" id="login-error"></p>
+                <input type="email" id="login-email" placeholder="Seu e-mail" required>
+                <input type="password" id="login-password" placeholder="Sua senha" required>
+                <button id="btn-do-login">Entrar</button>
+                <p>Não tem uma conta? <a href="#" id="show-register">Cadastre-se</a></p>
+            </div>
+
+            <div class="form-wrapper" id="register-form" style="display: none;">
+                <h2>Criar Nova Conta</h2>
+                <p class="form-error" id="register-error"></p>
+                <input type="text" id="register-name" placeholder="Seu nome" required>
+                <input type="email" id="register-email" placeholder="Seu e-mail" required>
+                <input type="password" id="register-password" placeholder="Crie uma senha" required>
+                <button id="btn-do-register">Cadastrar</button>
+                <p>Já tem uma conta? <a href="#" id="show-login">Entrar</a></p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <p>ParkEasy &copy; 2025 - Projeto de TCC</p>
+    </footer>
+
+    <script type="module" src="login.js"></script>
+
+</body>
+</html>
