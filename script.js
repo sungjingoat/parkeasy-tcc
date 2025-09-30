@@ -27,7 +27,6 @@ const contadorVagasLivresElement = document.getElementById('vagas-livres');
 const containerVagas = document.querySelector('.container-vagas');
 
 let currentUser = null;
-let activeTimers = {};
 
 // --- PONTO CENTRAL DA APLICAÇÃO ---
 onAuthStateChanged(auth, (user) => {
@@ -75,28 +74,19 @@ containerVagas.addEventListener('click', (event) => {
 
 function listenToVagas() {
     const vagasRef = ref(database, 'vagas/');
-    
-    // **MUDANÇA CRÍTICA:** Adicionamos o segundo argumento (errorCallback)
-    onValue(vagasRef, 
-        (snapshot) => {
-            // Callback de sucesso (o que já tínhamos)
-            const vagasData = snapshot.val();
-            renderVagas(vagasData);
-        }, 
-        (error) => {
-            // Callback de ERRO (a parte nova e importante)
-            console.error("Erro de permissão do Firebase:", error);
-            contadorVagasLivresElement.textContent = "Erro ao carregar vagas. Verifique as permissões.";
-        }
-    );
+    onValue(vagasRef, (snapshot) => {
+        const vagasData = snapshot.val();
+        renderVagas(vagasData);
+    });
 }
+
+// --- Funções de Ação (Simplificadas, sem temporizadores) ---
 
 function reservarVaga(numeroVaga) {
     if (!currentUser) return;
     const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
     set(vagaRef, {
         status: "reservada",
-        tempoExpiracao: Date.now() + 180 * 1000,
         reservadoPor: currentUser.uid
     });
 }
@@ -106,7 +96,6 @@ function fazerCheckin(numeroVaga) {
     const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
     set(vagaRef, {
         status: "estacionando",
-        tempoExpiracao: Date.now() + 60 * 1000,
         reservadoPor: currentUser.uid
     });
 }
@@ -114,45 +103,14 @@ function fazerCheckin(numeroVaga) {
 function cancelarReserva(numeroVaga) {
     if (!currentUser) return;
     const vagaRef = ref(database, `vagas/vaga${numeroVaga}`);
-    set(vagaRef, { status: false, tempoExpiracao: null, reservadoPor: null });
+    set(vagaRef, { status: false, reservadoPor: null });
 }
 
-// --- LÓGICA DO TEMPORIZADOR VISUAL ---
-function startTimer(vagaKey, expirationTime, displayElement, prefixText, onExpire) {
-    if (activeTimers[vagaKey]) {
-        clearInterval(activeTimers[vagaKey]);
-    }
 
-    const updateText = () => {
-        const totalSecondsRemaining = Math.round((expirationTime - Date.now()) / 1000);
-
-        if (totalSecondsRemaining < 0) {
-            if (activeTimers[vagaKey]) {
-                clearInterval(activeTimers[vagaKey]);
-                delete activeTimers[vagaKey];
-            }
-            onExpire();
-            return;
-        }
-
-        const minutes = Math.floor(totalSecondsRemaining / 60);
-        const seconds = totalSecondsRemaining % 60;
-        const fMinutes = String(minutes).padStart(2, '0');
-        const fSeconds = String(seconds).padStart(2, '0');
-
-        displayElement.textContent = `${prefixText} (${fMinutes}:${fSeconds})`;
-    };
-
-    updateText(); // Mostra o tempo imediatamente
-    const intervalId = setInterval(updateText, 1000);
-    activeTimers[vagaKey] = intervalId;
-}
-
-// --- FUNÇÃO DE RENDERIZAÇÃO ---
+// --- FUNÇÃO DE RENDERIZAÇÃO (Simplificada, sem temporizadores) ---
 function renderVagas(vagasData) {
-    // Se não houver dados, pode ser a primeira vez que carrega ou um erro.
-    if (!vagasData && currentUser) {
-        contadorVagasLivresElement.textContent = "Nenhuma vaga encontrada ou a carregar...";
+    if (!vagasData) {
+        contadorVagasLivresElement.textContent = "A carregar dados...";
         return;
     }
 
@@ -169,17 +127,9 @@ function renderVagas(vagasData) {
         const btnCancelar = document.getElementById(`btn-cancelar-${i}`);
         
         // Limpeza
-        if (activeTimers[vagaKey]) {
-            clearInterval(activeTimers[vagaKey]);
-            delete activeTimers[vagaKey];
-        }
-        const timerVisualAntigo = vagaElement.querySelector('.timer-countdown');
-        if (timerVisualAntigo) timerVisualAntigo.remove();
-        
         btnReservar.style.display = 'none';
         btnCheckin.style.display = 'none';
         btnCancelar.style.display = 'none';
-        btnCheckin.textContent = "Estacionar Agora";
         vagaElement.className = 'vaga';
 
         // Lógica de Estados
@@ -189,25 +139,12 @@ function renderVagas(vagasData) {
             if (isOwner) {
                 btnCheckin.style.display = 'block';
                 btnCancelar.style.display = 'block';
-                if (vagaData.tempoExpiracao) {
-                    startTimer(vagaKey, vagaData.tempoExpiracao, btnCheckin, "Estacionar Agora", () => {
-                       cancelarReserva(i); 
-                    });
-                }
             }
         } else if (vagaData.status === "estacionando") {
             vagaElement.classList.add('estacionando');
             statusElement.textContent = 'ESTACIONANDO';
             if (isOwner) {
                 btnCancelar.style.display = 'block';
-            }
-            if (vagaData.tempoExpiracao) {
-                const timerElemento = document.createElement('div');
-                timerElemento.className = 'timer-countdown';
-                vagaElement.appendChild(timerElemento);
-                startTimer(vagaKey, vagaData.tempoExpiracao, timerElemento, "Tempo:", () => {
-                    cancelarReserva(i);
-                });
             }
         } else if (vagaData.status === true) {
             vagaElement.classList.add('ocupada');
